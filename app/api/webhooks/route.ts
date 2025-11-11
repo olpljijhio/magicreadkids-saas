@@ -34,7 +34,8 @@ export async function POST(req: NextRequest) {
 	const body = await req.text();
 	let event: StripeDiscriminatedEvent;
 	try {
-		event = getStripe().webhooks.constructEvent(body, signature, webhookSecret) as StripeDiscriminatedEvent;
+		const stripe = getStripe();
+		event = stripe.webhooks.constructEvent(body, signature, webhookSecret) as StripeDiscriminatedEvent;
 	} catch (err) {
 		console.error("Webhook signature verification failed:", err);
 		return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest) {
 				if (user?.id) {
 					await supabaseAdmin
 						.from("users")
-						.update({ subscription_status: "active", subscription_plan: plan })
+						.update({ subscription_type: plan })
 						.eq("id", user.id);
 					await supabaseAdmin.rpc("initialize_credits", { p_user_id: user.id });
 				}
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
 				if (user?.id) {
 					await supabaseAdmin
 						.from("users")
-						.update({ subscription_status: "canceled" })
+						.update({ subscription_type: null })
 						.eq("id", user.id);
 				}
 				break;

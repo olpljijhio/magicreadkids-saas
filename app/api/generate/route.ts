@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateChildrenStory } from "@/lib/openai";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
+export const runtime = "nodejs";
+
 export async function POST(req: NextRequest) {
 	try {
 		const supabaseAdmin = getSupabaseAdmin();
