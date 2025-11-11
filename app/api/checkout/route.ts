@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { getBaseUrl, getRequiredEnv } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
 	try {
+		const stripe = getStripe();
 		const body = await req.json();
 		const plan = (body?.plan as "monthly" | "yearly") || "monthly";
 

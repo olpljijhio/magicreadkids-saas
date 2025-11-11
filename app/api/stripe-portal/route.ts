@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { getBaseUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
 	try {
+		const stripe = getStripe();
 		// TODO: Replace cookie-based email with Supabase auth session
 		const userEmail = req.cookies.get("user_email")?.value || (await req.json())?.email;
 		if (!userEmail) {

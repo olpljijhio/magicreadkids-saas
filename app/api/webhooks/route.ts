@@ -1,7 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { getRequiredEnv, inferSubscriptionType } from "@/lib/utils";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import type Stripe from "stripe";
+
+type StripeDiscriminatedEvent =
+	| {
+			type: "checkout.session.completed";
+			data: { object: Stripe.Checkout.Session };
+	  }
+	| {
+			type: "invoice.paid";
+			data: { object: Stripe.Invoice };
+	  }
+	| {
+			type: "customer.subscription.deleted";
+			data: { object: Stripe.Subscription };
+	  }
+	| {
+			type: string;
+			data: { object: unknown };
+	  };
 
 export const runtime = "nodejs";
 
@@ -13,15 +32,16 @@ export async function POST(req: NextRequest) {
 	}
 
 	const body = await req.text();
-	let event: Stripe.DiscriminatedEvent;
+	let event: StripeDiscriminatedEvent;
 	try {
-		event = stripe.webhooks.constructEvent(body, signature, webhookSecret) as Stripe.DiscriminatedEvent;
+		event = getStripe().webhooks.constructEvent(body, signature, webhookSecret) as StripeDiscriminatedEvent;
 	} catch (err) {
 		console.error("Webhook signature verification failed:", err);
 		return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
 	}
 
 	try {
+		const supabaseAdmin = getSupabaseAdmin();
 		switch (event.type) {
 			case "checkout.session.completed": {
 				const session = event.data.object as Stripe.Checkout.Session;
@@ -80,29 +100,6 @@ export async function POST(req: NextRequest) {
 		console.error("Webhook handling failed:", error);
 		return NextResponse.json({ error: "Webhook error" }, { status: 500 });
 	}
-}
-
-// Types for Stripe event narrowing
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare namespace Stripe {
-	type DiscriminatedEvent =
-		| {
-				type: "checkout.session.completed";
-				data: { object: Stripe.Checkout.Session };
-		  }
-		| {
-				type: "invoice.paid";
-				data: { object: Stripe.Invoice };
-		  }
-		| {
-				type: "customer.subscription.deleted";
-				data: { object: Stripe.Subscription };
-		  }
-		| {
-				// Fallback
-				type: string;
-				data: { object: unknown };
-		  };
 }
 
 

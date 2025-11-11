@@ -1,12 +1,16 @@
 import OpenAI from "openai";
 import { getRequiredEnv } from "./utils";
 
-/**
- * OpenAI client for server-side story generation
- */
-export const openai = new OpenAI({
-	apiKey: getRequiredEnv("OPENAI_API_KEY"),
-});
+let openaiClient: OpenAI | null = null;
+
+export function getOpenAI(): OpenAI {
+	if (!openaiClient) {
+		openaiClient = new OpenAI({
+			apiKey: getRequiredEnv("OPENAI_API_KEY"),
+		});
+	}
+	return openaiClient;
+}
 
 export async function generateChildrenStory(params: {
 	childName: string;
@@ -32,7 +36,7 @@ export async function generateChildrenStory(params: {
 		`Structure: renvoie JSON avec "title" et "content".`,
 	].join(" ");
 
-	const response = await openai.chat.completions.create({
+	const response = await getOpenAI().chat.completions.create({
 		model: "gpt-4o-mini",
 		temperature: 0.7,
 		messages: [

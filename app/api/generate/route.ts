@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateChildrenStory } from "@/lib/openai";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function POST(req: NextRequest) {
 	try {
+		const supabaseAdmin = getSupabaseAdmin();
 		const body = await req.json();
 		const { childName, age, theme, style, words, userEmail } = body as {
 			childName: string;
