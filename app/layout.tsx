@@ -1,17 +1,12 @@
-import { validateEnv } from "@/lib/env";
-
-// Valider les env au démarrage (côté serveur uniquement)
-if (typeof window === "undefined") {
-  validateEnv();
-}
 ﻿import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Script from "next/script";
 
 export const metadata = {
-  title: "MagicReadKids - Creez des histoires magiques pour vos enfants",
-  description: "Generez des histoires personnalisees pour vos enfants en 30 secondes avec IA",
+  title: "MagicReadKids - Créez des histoires magiques pour vos enfants",
+  description:
+    "Générez des histoires personnalisées pour vos enfants en 30 secondes avec l’IA.",
 };
 
 const organizationSchema = {
@@ -20,16 +15,17 @@ const organizationSchema = {
   name: "MagicReadKids",
   url: "https://app.magicreadkids.fr",
   logo: "https://app.magicreadkids.fr/logo.png",
-  description: "Creez des histoires magiques et personnalisees pour vos enfants",
+  description:
+    "Créez des histoires magiques et personnalisées pour vos enfants.",
   founder: {
     "@type": "Person",
-    name: "Elina Martin"
+    name: "Elina Martin",
   },
   sameAs: [
     "https://magicreadkids.fr",
     "https://twitter.com/magicreadkids",
-    "https://instagram.com/magicreadkids"
-  ]
+    "https://instagram.com/magicreadkids",
+  ],
 };
 
 export default function RootLayout({
@@ -43,9 +39,12 @@ export default function RootLayout({
         <Script
           id="organization-schema"
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationSchema),
+          }}
         />
       </head>
+
       <body>
         <Navbar />
         <main>{children}</main>
