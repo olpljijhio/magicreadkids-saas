@@ -1,21 +1,41 @@
-﻿interface StoryCardProps {
+﻿"use client";
+
+import * as React from "react";
+
+export interface StoryCardProps {
   title: string;
   content: string;
-  createdAt?: string;
+  createdAt?: string | Date;
 }
 
-export function StoryCard({ title, content, createdAt }: StoryCardProps) {
+export function StoryCard(props: StoryCardProps): JSX.Element {
+  const { title, content, createdAt } = props;
+
+  let dateLabel: string | null = null;
+  if (createdAt) {
+    const d = typeof createdAt === "string" ? new Date(createdAt) : createdAt;
+    if (!Number.isNaN(d.getTime())) {
+      dateLabel = d.toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    }
+  }
+
   return (
-    <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-purple-200">
-      <h3 className="text-2xl font-bold mb-4 text-purple-700">{title}</h3>
-      <div className="prose max-w-none">
-        <p className="text-gray-700 whitespace-pre-wrap">{content}</p>
+    <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <header className="mb-4 flex items-center justify-between gap-2">
+        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        {dateLabel && (
+          <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+            {dateLabel}
+          </span>
+        )}
+      </header>
+      <div className="prose prose-sm max-w-none whitespace-pre-line text-gray-800">
+        {content}
       </div>
-      {createdAt && (
-        <p className="text-sm text-gray-500 mt-4">
-          Créée le {new Date(createdAt).toLocaleDateString("fr-FR")}
-        </p>
-      )}
-    </div>
+    </article>
   );
 }

@@ -1,11 +1,17 @@
 ﻿import Stripe from "stripe";
+import { getRequiredEnv } from "@/lib/utils";
 
-export function getStripe() {
-  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-  if (!stripeSecretKey) {
-    throw new Error("STRIPE_SECRET_KEY is not set");
+let stripeInstance: Stripe | null = null;
+
+/**
+ * Singleton Stripe, configuré avec l'API version stable.
+ */
+export function getStripe(): Stripe {
+  if (!stripeInstance) {
+    const secretKey = getRequiredEnv("STRIPE_SECRET_KEY");
+    stripeInstance = new Stripe(secretKey, {
+      apiVersion: "2024-06-20",
+    });
   }
-  return new Stripe(stripeSecretKey, {
-    apiVersion: "2024-11-20.acacia",
-  });
+  return stripeInstance;
 }
