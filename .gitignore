@@ -5,3 +5,15 @@
 npm-debug.log*
 yarn-error.log*
 .DS_Store
+# Environment
+.env.local
+.env*.local
+.env.production
+
+# Secrets
+*.key
+*.pem
+
+# Logs
+*.log
+npm-debug.log*

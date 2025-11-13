@@ -1,46 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
-import { getBaseUrl, getRequiredEnv } from "@/lib/utils";
+import { getBaseUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
-	try {
-		const stripe = getStripe();
-		const body = await req.json();
-		const plan = (body?.plan as "monthly" | "yearly") || "monthly";
+  try {
+    const { priceId, plan } = await req.json();
+    if (!priceId || typeof priceId !== "string") {
+      return NextResponse.json({ error: "Missing priceId" }, { status: 400 });
+    }
 
-		// TODO: Replace cookie-based email with Supabase auth session (user id/email)
-		const userEmail = req.cookies.get("user_email")?.value || body?.email;
-		if (!userEmail) {
-			return NextResponse.json({ error: "Missing user email" }, { status: 400 });
-		}
+    const stripe = getStripe();
+    const baseUrl = getBaseUrl();
 
-		const priceId =
-			plan === "yearly" ? getRequiredEnv("NEXT_PUBLIC_STRIPE_PRICE_YEARLY") : getRequiredEnv("NEXT_PUBLIC_STRIPE_PRICE_MONTHLY");
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: [{ price: priceId, quantity: 1 }],
+      allow_promotion_codes: true,
+      // Essai 3 jours pour tous les plans (tu peux conditionner sur plan === "monthly" si tu préfères)
+      subscription_data: { trial_period_days: 3 },
+      success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/abonnement`,
+      billing_address_collection: "auto",
+    });
 
-		// Find or create customer
-		const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
-		const customer = customers.data[0] || (await stripe.customers.create({ email: userEmail }));
-
-		const baseUrl = getBaseUrl();
-		const session = await stripe.checkout.sessions.create({
-			mode: "subscription",
-			payment_method_types: ["card"],
-			customer: customer.id,
-			line_items: [{ price: priceId, quantity: 1 }],
-			success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
-			cancel_url: `${baseUrl}/cancel`,
-			metadata: {
-				user_email: userEmail,
-			},
-		});
-
-		return NextResponse.json({ url: session.url });
-	} catch (error) {
-		console.error("Checkout error:", error);
-		return NextResponse.json({ error: "Unable to create checkout session" }, { status: 500 });
-	}
+    return NextResponse.json({ url: session.url }, { status: 200 });
+  } catch (e: any) {
+    console.error("[checkout] Stripe error:", {
+      message: e?.message,
+      type: e?.type,
+      code: e?.code,
+      raw: e?.raw,
+    });
+    return NextResponse.json({ error: "Stripe error" }, { status: 500 });
+  }
 }
-
-

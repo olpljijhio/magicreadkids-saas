@@ -25,33 +25,42 @@ const StripePublishableSchema = z
   .regex(/^pk_(test|live)_/, "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY doit commencer par pk_test_ ou pk_live_");
 
 const schemaBase = z.object({
+  // Supabase
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20),
 
+  // OpenAI
   OPENAI_API_KEY: OpenAIKeySchema,
 
+  // Stripe
   STRIPE_SECRET_KEY: StripeSecretSchema,
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: StripePublishableSchema,
   STRIPE_WEBHOOK_SECRET: z.string().min(10).optional(),
   NEXT_PUBLIC_STRIPE_PRICE_MONTHLY: z.string().min(5).optional(),
   NEXT_PUBLIC_STRIPE_PRICE_YEARLY: z.string().min(5).optional(),
 
+  // Sécurité
   JWT_SECRET: z.string().min(32),
   ENCRYPTION_KEY: z.string().min(24),
 
+  // Upstash (optionnel)
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 
+  // Sentry (optionnel)
   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
 
+  // URLs
   NEXT_PUBLIC_APP_URL: z.string().url(),
   NEXT_PUBLIC_BLOG_URL: z.string().url(),
 
+  // Environnement
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
 
 const schema = schemaBase.superRefine((env, ctx) => {
+  // Exigences supplémentaires en production
   if (isProd) {
     if (!env.STRIPE_WEBHOOK_SECRET) {
       ctx.addIssue({
@@ -76,6 +85,7 @@ const schema = schemaBase.superRefine((env, ctx) => {
     }
   }
 
+  // Cohérence Upstash
   if (env.UPSTASH_REDIS_REST_URL && !env.UPSTASH_REDIS_REST_TOKEN) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -92,12 +102,12 @@ const schema = schemaBase.superRefine((env, ctx) => {
   }
 });
 
-type Env = z.infer<typeof schema>;
+export type Env = z.infer<typeof schema>;
 
 let cachedEnv: Env | null = null;
 
 /**
- * Valide et met en cache l'environnement
+ * Valide et met en cache l'environnement (fonction réutilisable)
  */
 function loadEnv(): Env {
   if (cachedEnv) return cachedEnv;
@@ -110,29 +120,39 @@ function loadEnv(): Env {
     const msg =
       `❌ Variables d’environnement invalides :\n` +
       lines.join("\n") +
-      `\n➡️ Corrige ton .env.local avant de continuer.`;
+      `\n➡️ Corrige ton .env.local / Vercel avant de continuer.`;
     throw new Error(msg);
   }
 
   cachedEnv = parsed.data;
+
   if (process.env.NODE_ENV !== "production") {
     console.log("✅ ENV validé avec succès (dev)");
   }
+
   return cachedEnv;
 }
 
 /**
- * Proxy typé pour accéder à process.env de manière sécurisée
+ * Fonction publique utilisée par le layout ou ailleurs.
+ * (Corrige l'erreur "validateEnv is not a function")
+ */
+export function validateEnv(): Env {
+  return loadEnv();
+}
+
+/**
+ * Proxy typé pour accéder à env.MA_CLE de façon safe.
  */
 export const env: Env = new Proxy({} as Env, {
-  get(_, prop: string) {
+  get(_target, prop: string) {
     const e = loadEnv();
     return e[prop as keyof Env];
   },
-});
+}) as Env;
 
 /**
- * Helpers utiles
+ * Helpers pratiques
  */
 export function getRequiredEnv<K extends keyof Env>(key: K): Env[K] {
   const value = env[key];

@@ -1,0 +1,6 @@
+﻿# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://app.magicreadkids.fr/sitemap.xml

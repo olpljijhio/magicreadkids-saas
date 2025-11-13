@@ -1,17 +1,19 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Thème MagicReadKids */
 :root {
-	--radius: 0.5rem;
+  --color-primary: #c471ed;
+  --color-secondary: #f64f59;
+  --color-bg: #fffafc;
 }
 
-* {
-	box-sizing: border-box;
+body {
+  @apply bg-[var(--color-bg)] text-gray-800 font-sans antialiased;
 }
 
-html, body {
-	height: 100%;
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold text-white shadow-md hover:shadow-lg transition;
+  background-image: linear-gradient(90deg, #c471ed 0%, #f64f59 100%);
 }
-
-
