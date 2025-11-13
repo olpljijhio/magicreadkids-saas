@@ -10,7 +10,7 @@ export function getStripe(): Stripe {
   if (!stripeInstance) {
     const secretKey = getRequiredEnv("STRIPE_SECRET_KEY");
     stripeInstance = new Stripe(secretKey, {
-      apiVersion: "2024-06-20",
+      apiVersion: "2023-10-16",
     });
   }
   return stripeInstance;

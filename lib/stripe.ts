@@ -14,3 +14,6 @@ export function getStripe(): Stripe {
   }
   return stripeSingleton;
 }
+
+/** Export for convenience */
+export const stripe = getStripe();

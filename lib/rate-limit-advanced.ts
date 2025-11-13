@@ -1,5 +1,3 @@
-# 2) Créer le fichier lib/rate-limit-advanced.ts avec le code complet
-$newContent = @'
 import "server-only";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
@@ -151,7 +149,7 @@ export async function withRateLimit(
 }
 
 /**
- * Exemple d’utilisation dans une route:
+ * Exemple d'utilisation dans une route:
  *
  * export async function POST(req: NextRequest) {
  *   const limited = await withRateLimit(req, "story");
@@ -159,5 +157,3 @@ export async function withRateLimit(
  *   // ... ton code
  * }
  */
-'@
-Set-Content -Path ".\lib\rate-limit-advanced.ts" -Value $newContent -Encoding utf8
