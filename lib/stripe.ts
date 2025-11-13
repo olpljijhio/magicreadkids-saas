@@ -14,3 +14,10 @@ export function getStripe(): Stripe {
   }
   return stripeSingleton;
 }
+
+/** Lazy export - only called when actually used */
+export const stripe = new Proxy({} as Stripe, {
+  get(_target, prop) {
+    return getStripe()[prop as keyof Stripe];
+  }
+});
