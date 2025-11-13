@@ -1,42 +1,49 @@
-// Minimal shared utilities for environment and parsing
-// Keep this file dependency-free and pure
-
-export function assertEnv(varName: string, value: string | undefined): asserts value is string {
-	if (!value || value.length === 0) {
-		throw new Error(`Missing required environment variable: ${varName}`);
-	}
-}
-
-export function getRequiredEnv(varName: string): string {
-	const value = process.env[varName];
-	assertEnv(varName, value);
-	return value;
-}
-
-export function safeParseJSON<T = unknown>(input: string): { ok: true; value: T } | { ok: false; error: unknown } {
-	try {
-		const value = JSON.parse(input) as T;
-		return { ok: true, value };
-	} catch (error) {
-		return { ok: false, error };
-	}
-}
-
 /**
- * Determine subscription type based on Stripe Price IDs.
- * Returns "monthly" | "yearly" | "unknown"
+ * Utilitaires globaux pour MagicReadKids
  */
-export function inferSubscriptionType(priceId: string): "monthly" | "yearly" | "unknown" {
-	const monthly = process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY || "";
-	const yearly = process.env.NEXT_PUBLIC_STRIPE_PRICE_YEARLY || "";
-	if (priceId === monthly) return "monthly";
-	if (priceId === yearly) return "yearly";
-	return "unknown";
+
+export function getRequiredEnv(key: string): string {
+  const v = process.env[key];
+  if (!v || v.trim() === "") {
+    throw new Error(`❌ Missing required env var: ${key}`);
+  }
+  return v;
 }
 
-export function getBaseUrl(): string {
-	// Required on Vercel. In local dev, you can set NEXT_PUBLIC_APP_URL=http://localhost:3000
-	return getRequiredEnv("NEXT_PUBLIC_APP_URL").replace(/\/+$/, "");
+export function assertEnv(keys: string[]) {
+  const missing: string[] = [];
+  for (const k of keys) {
+    const v = process.env[k];
+    if (!v || v.trim() === "") missing.push(k);
+  }
+  if (missing.length) {
+    throw new Error(`❌ Missing env vars: ${missing.join(", ")}`);
+  }
 }
 
+/** Base URL publique de l’app (Vercel/Prod ou localhost) */
+export function getBaseUrl() {
+  // Vercel fournit NEXT_PUBLIC_APP_URL si tu l'as défini, sinon on reconstruit
+  const explicit = process.env.NEXT_PUBLIC_APP_URL;
+  if (explicit && explicit.trim()) return explicit.replace(/\/+$/, "");
+  // Si dispo en edge/runtime Vercel
+  const vercelUrl = process.env.VERCEL_URL; // ex: myapp.vercel.app
+  if (vercelUrl) return `https://${vercelUrl}`.replace(/\/+$/, "");
+  // Fallback local
+  const port = process.env.PORT || "3000";
+  return `http://localhost:${port}`;
+}
 
+/** Parse JSON en sécurité (retourne fallback en cas d’échec) */
+export function safeParseJSON<T>(val: string, fallback: T): T {
+  try { return JSON.parse(val) as T; } catch { return fallback; }
+}
+
+/** Déduire le type d’abonnement depuis un priceId Stripe */
+export function inferSubscriptionType(priceId?: string | null): "monthly" | "yearly" | null {
+  if (!priceId) return null;
+  const id = priceId.toLowerCase();
+  if (id.includes("month")) return "monthly";
+  if (id.includes("year") || id.includes("annual")) return "yearly";
+  return null;
+}
