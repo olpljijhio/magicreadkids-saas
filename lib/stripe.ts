@@ -15,5 +15,9 @@ export function getStripe(): Stripe {
   return stripeSingleton;
 }
 
-/** Export for convenience */
-export const stripe = getStripe();
+/** Lazy export - only called when actually used */
+export const stripe = new Proxy({} as Stripe, {
+  get(_target, prop) {
+    return getStripe()[prop as keyof Stripe];
+  }
+});
